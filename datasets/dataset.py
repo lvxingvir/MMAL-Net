@@ -4,6 +4,10 @@ import os
 from PIL import Image
 from torchvision import transforms
 import torch
+import re
+from PIL import Image
+from torch.utils.data import Dataset, DataLoader
+import pandas as pd
 
 class CUB():
     def __init__(self, input_size, root, is_train=True, data_len=None):
@@ -196,3 +200,83 @@ class FGVC_aircraft():
             return len(self.train_img_label)
         else:
             return len(self.test_img_label)
+
+class MURA_Dataset(Dataset):
+    _patient_re = re.compile(r'patient(\d+)')
+    _study_re = re.compile(r'study(\d+)')
+    _image_re = re.compile(r'image(\d+)')
+    _study_type_re = re.compile(r'XR_(\w+)')
+
+    def __init__(self, data_dir, csv_file, transform=None):
+        """
+        :param data_dir: the directory of data
+        :param csv_file: the .csv file of data list
+        :param transform: the transforms exptected to be applied to the data
+        """
+        self.data_dir = data_dir
+        ori_df = pd.read_csv(os.path.join(data_dir, csv_file))
+        # self.frame = ori_df.sample(frac=0.2,random_state=1)
+        self.frame = ori_df.copy()
+        self.transform = transform
+
+    def _parse_patient(self, img_filename):
+        """
+        :param img_filename: the file name of the image data
+        :return: the number of patient
+        """
+        return int(self._patient_re.search(img_filename).group(1))
+
+    def _parse_study(self, img_filename):
+        """
+        :param img_filename: the file name of the image data
+        :return: the number of study
+        """
+        return int(self._study_re.search(img_filename).group(1))
+
+    def _parse_image(self, img_filename):
+        """
+        :param img_filename: the file name of image data
+        :return: the number of image
+        """
+        return int(self._image_re.search(img_filename).group(1))
+
+    def _parse_study_type(self, img_filename):
+        """
+        :param img_filename: the file name of image data
+        :return: the type of the study
+        """
+        return self._study_type_re.search(img_filename).group(1)
+
+    def __len__(self):
+        return len(self.frame)
+
+    def __getitem__(self, idx):
+        img_filename = self.frame.iloc[idx, 1]
+        # print(idx,img_filename)
+        patient = self._parse_patient(img_filename)
+        study = self._parse_study(img_filename)
+        image_num = self._parse_image(img_filename)
+        study_type = self._parse_study_type(img_filename)
+
+        file_path = os.path.join(self.data_dir, img_filename)
+        image = Image.open(file_path).convert('RGB')
+        label = self.frame.iloc[idx, 2]
+        label = int(label)
+
+        meta_data = {
+            'y_true': label,
+            'img_filename': img_filename,
+            'file_path': file_path,
+            'patient': patient,
+            'study': study,
+            'study_type': study_type,
+            'image_num': image_num,
+            'encounter': "{}_{}_{}".format(study_type, patient, study)
+        }
+
+        if self.transform:
+            image = self.transform(image)
+
+        # plt.imshow(image.permute(1,2,0).numpy())
+        # sample = {'image': image, 'label': label, 'meta_data': meta_data}
+        return image,label

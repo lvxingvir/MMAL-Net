@@ -1,10 +1,12 @@
 import os
 import glob
 import torch
+import torch.nn.functional as F
 from tqdm import tqdm
 from tensorboardX import SummaryWriter
 from config import max_checkpoint_num, proposalN, eval_trainset, set
-from utils.eval_model import eval
+from utils.eval_model_mura import eval
+
 
 def train(model,
           trainloader,
@@ -29,15 +31,19 @@ def train(model,
                 images, labels, _, _ = data
             else:
                 images, labels = data
-            images, labels = images.cuda(), labels.cuda()
+            images, labels = images.cuda(), labels.float().cuda()
 
             optimizer.zero_grad()
 
             proposalN_windows_score, proposalN_windows_logits, indices, \
             window_scores, _, raw_logits, local_logits, _ = model(images, epoch, i, 'train')
 
-            raw_loss = criterion(raw_logits, labels)
-            local_loss = criterion(local_logits, labels)
+            raw_logits = F.sigmoid(raw_logits)   # for mura
+            local_logits = F.sigmoid(local_logits)  # for mura
+            proposalN_windows_logits = F.sigmoid(proposalN_windows_logits) # for mura
+
+            raw_loss = criterion(raw_logits, labels)  #float for mura
+            local_loss = criterion(local_logits, labels) # float for mura
             windowscls_loss = criterion(proposalN_windows_logits,
                                labels.unsqueeze(1).repeat(1, proposalN).view(-1))
 

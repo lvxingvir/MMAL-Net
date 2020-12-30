@@ -24,9 +24,12 @@ def main():
     #定义模型
     model = MainNet(proposalN=proposalN, num_classes=num_classes, channels=channels)
 
-    #设置训练参数
-    criterion = nn.CrossEntropyLoss()
+    if torch.cuda.device_count() > 1:
+        model = nn.DataParallel(model).cuda()
 
+    #设置训练参数
+    # criterion = nn.CrossEntropyLoss()
+    criterion = nn.BCELoss()  # for mura
     parameters = model.parameters()
 
     #加载checkpoint

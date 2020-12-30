@@ -2,25 +2,25 @@ from utils.indices2coordinates import indices2coordinates
 from utils.compute_window_nums import compute_window_nums
 import numpy as np
 
-CUDA_VISIBLE_DEVICES = '0'  # The current version only supports one GPU training
+CUDA_VISIBLE_DEVICES = '3'  # The current version only supports one GPU training
 
 
-set = 'CAR'  # Different dataset with different
+set = 'Mura'  # Different dataset with different
 model_name = ''
 
-batch_size = 6
+batch_size = 4
 vis_num = batch_size  # The number of visualized images in tensorboard
 eval_trainset = False  # Whether or not evaluate trainset
-save_interval = 1
-max_checkpoint_num = 200
-end_epoch = 200
+save_interval = 4
+max_checkpoint_num = 100
+end_epoch = 100
 init_lr = 0.001
-lr_milestones = [60, 100]
+lr_milestones = [20, 40, 60, 100]
 lr_decay_rate = 0.1
 weight_decay = 1e-4
 stride = 32
 channels = 2048
-input_size = 448
+input_size = 448  #448 as original
 
 # The pth path of pretrained model
 pretrain_path = './models/pretrained/resnet50-19c8e357.pth'
@@ -55,6 +55,10 @@ else:
         model_path = './checkpoint/aircraft'      # pth save path
         root = './datasets/FGVC-aircraft'  # dataset path
         num_classes = 100
+    elif set == 'Mura':
+        model_path = './checkpoint/mura'      # pth save path
+        root = r'E:\Xing\Data\MURA-v1.1'  # dataset path
+        num_classes = 1
 
 
 '''indice2coordinates'''

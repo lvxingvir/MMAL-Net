@@ -1,6 +1,7 @@
 models/pretrained/*.pth
 datasets/CUB_200_2011/images/*/
 models/*.pth
+checkpoint/
 .idea
 *.DS_Store
 *__init__.py
