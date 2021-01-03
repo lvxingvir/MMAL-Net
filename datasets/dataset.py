@@ -215,7 +215,7 @@ class MURA_Dataset(Dataset):
         """
         self.data_dir = data_dir
         ori_df = pd.read_csv(os.path.join(data_dir, csv_file))
-        # self.frame = ori_df.sample(frac=0.2,random_state=1)
+        # self.frame = ori_df.sample(frac=0.01,random_state=1).reset_index(drop=True)  # for network testing
         self.frame = ori_df.copy()
         self.transform = transform
 
@@ -251,7 +251,7 @@ class MURA_Dataset(Dataset):
         return len(self.frame)
 
     def __getitem__(self, idx):
-        img_filename = self.frame.iloc[idx, 1]
+        img_filename = self.frame.loc[idx]['FilePath']
         # print(idx,img_filename)
         patient = self._parse_patient(img_filename)
         study = self._parse_study(img_filename)
@@ -260,8 +260,10 @@ class MURA_Dataset(Dataset):
 
         file_path = os.path.join(self.data_dir, img_filename)
         image = Image.open(file_path).convert('RGB')
-        label = self.frame.iloc[idx, 2]
+        label = self.frame.loc[idx]['Label']
         label = int(label)
+        label_bp = self.frame.loc[idx]['Bp_label']
+        label_bp = int(label_bp)
 
         meta_data = {
             'y_true': label,
@@ -279,4 +281,5 @@ class MURA_Dataset(Dataset):
 
         # plt.imshow(image.permute(1,2,0).numpy())
         # sample = {'image': image, 'label': label, 'meta_data': meta_data}
-        return image,label
+        # return image,label # for only mura dataset
+        return image,label_bp,label   # for mura bodypart

@@ -4,13 +4,16 @@ import torch.nn as nn
 from torch.optim.lr_scheduler import MultiStepLR
 import shutil
 import time
-from config import num_classes, model_name, model_path, lr_milestones, lr_decay_rate, input_size, \
+from config_bdpt import num_classes, model_name, model_path, lr_milestones, lr_decay_rate, input_size, \
     root, end_epoch, save_interval, init_lr, batch_size, CUDA_VISIBLE_DEVICES, weight_decay, \
     proposalN, set, channels
-from utils.train_model import train
+from utils.train_model_bdpt import train
 from utils.read_dataset import read_dataset
 from utils.auto_laod_resume import auto_load_resume
 from networks.model_bdpt import MainNet
+
+import warnings
+warnings.filterwarnings("ignore")
 
 import os
 
@@ -28,8 +31,8 @@ def main():
         model = nn.DataParallel(model).cuda()
 
     #设置训练参数
-    # criterion = nn.CrossEntropyLoss()
-    criterion = nn.BCELoss()  # for mura
+    criterion_bp = nn.CrossEntropyLoss()
+    criterion_ls = nn.BCELoss()  # for mura
     parameters = model.parameters()
 
     #加载checkpoint
@@ -57,7 +60,8 @@ def main():
     train(model=model,
           trainloader=trainloader,
           testloader=testloader,
-          criterion=criterion,
+          criterion_bp=criterion_bp,
+          criterion_ls=criterion_ls,
           optimizer=optimizer,
           scheduler=scheduler,
           save_path=save_path,
