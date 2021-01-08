@@ -84,14 +84,14 @@ class MainNet(nn.Module):
         super(MainNet, self).__init__()
         self.num_classes = num_classes
         self.proposalN = proposalN
-        self.pretrained_model = resnet.resnet50(pretrained=True, pth_path=pretrain_path)
+        self.pretrained_model_bp = resnet.resnet50(pretrained=True, pth_path=pretrain_path)
         self.pretrained_model = resnet.resnet50(pretrained=True, pth_path=pretrain_path)
         self.rawcls_net = nn.Linear(channels, num_classes)
         self.localcls_net = nn.Linear(channels, 1)
         self.APPM = APPM()
 
     def forward(self, x, epoch, batch_idx, status='test', DEVICE='cuda'):
-        fm, embedding, conv5_b = self.pretrained_model(x)
+        fm, embedding, conv5_b = self.pretrained_model_bp(x)
         batch_size, channel_size, side_size, _ = fm.shape
         assert channel_size == 2048
 

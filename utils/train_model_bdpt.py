@@ -56,7 +56,7 @@ def train(model,
             if epoch < 2:
                 total_loss = raw_loss
             else:
-                total_loss = raw_loss + local_loss + windowscls_loss
+                total_loss = 0.5*raw_loss + local_loss + 0.5*windowscls_loss
 
             total_loss.backward()
 

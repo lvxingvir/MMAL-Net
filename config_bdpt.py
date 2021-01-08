@@ -16,7 +16,7 @@ max_checkpoint_num = 60
 end_epoch = 60
 init_lr = 0.001
 lr_milestones = [10,20,30,40]
-lr_decay_rate = 0.3
+lr_decay_rate = 0.1
 weight_decay = 1e-4
 stride = 32
 channels = 2048
@@ -41,6 +41,7 @@ if set == 'CUB':
 else:
     # windows info for CAR and Aircraft
     N_list = [3, 2, 1]
+    # N_list = [1, 1, 1]
     proposalN = sum(N_list)  # proposal window num
     window_side = [192, 256, 320]
     iou_threshs = [0.25, 0.25, 0.25]
@@ -60,7 +61,7 @@ else:
         root = r'E:\Xing\Data\MURA-v1.1'  # dataset path
         num_classes = 1
     elif set == 'Mura_bp':
-        model_path = './checkpoint/mura_bp_test'  # pth save path
+        model_path = './checkpoint/mura_bp_bimodel_adj0103'  # pth save path
         root = r'E:\Xing\Data\MURA-v1.1'  # dataset path
         num_classes = 7
 
