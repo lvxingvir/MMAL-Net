@@ -2,14 +2,12 @@ import numpy as np
 import imageio
 import os
 from PIL import Image
-from torchvision import transforms,utils
+from torchvision import transforms
 import torch
 import re
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
-import torch.nn.functional as F
 import pandas as pd
-import glob2
 import matplotlib.pyplot as plt
 
 class CUB():
@@ -287,115 +285,4 @@ class MURA_Dataset(Dataset):
         # plt.show()
         # sample = {'image': image, 'label': label, 'meta_data': meta_data}
         return image,label # for only mura dataset
-        # return image,label_bp,label   # for mura bodypart
-
-class MURA_Dataset_4img(Dataset):
-    _patient_re = re.compile(r'patient(\d+)')
-    _study_re = re.compile(r'study(\d+)')
-    _image_re = re.compile(r'image(\d+)')
-    _study_type_re = re.compile(r'XR_(\w+)')
-
-    def __init__(self, data_dir, csv_file, transform=None):
-        """
-        :param data_dir: the directory of data
-        :param csv_file: the .csv file of data list
-        :param transform: the transforms exptected to be applied to the data
-        """
-        self.data_dir = data_dir
-        ori_df = pd.read_csv(os.path.join(data_dir, csv_file))
-        # self.frame = ori_df.sample(frac=0.01,random_state=1).reset_index(drop=True)  # for network testing
-        self.frame = ori_df.copy()
-        self.transform = transform
-
-    def _parse_patient(self, img_filename):
-        """
-        :param img_filename: the file name of the image data
-        :return: the number of patient
-        """
-        return int(self._patient_re.search(img_filename).group(1))
-
-    def _parse_study(self, img_filename):
-        """
-        :param img_filename: the file name of the image data
-        :return: the number of study
-        """
-        return int(self._study_re.search(img_filename).group(1))
-
-    def _parse_image(self, img_filename):
-        """
-        :param img_filename: the file name of image data
-        :return: the number of image
-        """
-        return int(self._image_re.search(img_filename).group(1))
-
-    def _parse_study_type(self, img_filename):
-        """
-        :param img_filename: the file name of image data
-        :return: the type of the study
-        """
-        return self._study_type_re.search(img_filename).group(1)
-
-    def __len__(self):
-        return len(self.frame)
-
-    def __getitem__(self, idx):
-        img_filename = self.frame.loc[idx]['FilePath']
-        # print(idx,img_filename)
-        patient = self._parse_patient(img_filename)
-        study = self._parse_study(img_filename)
-        image_num = self._parse_image(img_filename)
-        study_type = self._parse_study_type(img_filename)
-
-        file_path = os.path.join(self.data_dir, img_filename)
-
-        f_head = os.path.split(file_path)[0]
-        f_tail = os.path.split(file_path)[1]
-
-        fl_t = os.path.join(f_head,f_tail)
-
-        fls = glob2.glob(os.path.join(f_head,'*.png'))
-
-        if len(fls)>1:
-            fls.remove(fl_t)
-            fls = [fl_t] + fls
-
-        fls = fls*4
-
-        image = Image.open(file_path).convert('RGB')
-        label = self.frame.loc[idx]['Label']
-        label = int(label)
-        # label_bp = self.frame.loc[idx]['Bp_label']
-        # label_bp = int(label_bp)
-
-        meta_data = {
-            'y_true': label,
-            'img_filename': img_filename,
-            'file_path': file_path,
-            'patient': patient,
-            'study': study,
-            'study_type': study_type,
-            'image_num': image_num,
-            'encounter': "{}_{}_{}".format(study_type, patient, study)
-        }
-
-        images = []
-
-        if self.transform:
-
-            for i in range(4):
-                img = Image.open(fls[i]).convert('RGB')
-                img = self.transform(img)
-                images.append(img)
-
-            image = self.transform(image)
-
-        images = utils.make_grid(images,nrow=2,padding=0)
-        # images = F.interpolate(images,size=[448,448])
-        # images = transforms.Resize()
-
-        # plt.imshow(image.permute(1,2,0).numpy()) # remember to cancel the normalization
-        # plt.colorbar()
-        # plt.show()
-        # sample = {'image': image, 'label': label, 'meta_data': meta_data}
-        return images,label # for only mura dataset
         # return image,label_bp,label   # for mura bodypart

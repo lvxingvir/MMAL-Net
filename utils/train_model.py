@@ -19,6 +19,8 @@ def train(model,
           end_epoch,
           save_interval):
 
+    best_acc=0
+
     for epoch in range(start_epoch + 1, end_epoch + 1):
         model.train()
 
@@ -32,6 +34,7 @@ def train(model,
             else:
                 images, labels = data
             images, labels = images.cuda(), labels.float().cuda()
+            # images = F.interpolate(images,size=[448,448])
 
             optimizer.zero_grad()
 
@@ -47,10 +50,12 @@ def train(model,
             windowscls_loss = criterion(proposalN_windows_logits,
                                labels.unsqueeze(1).repeat(1, proposalN).view(-1))
 
-            if epoch < 2:
-                total_loss = raw_loss
-            else:
-                total_loss = raw_loss + local_loss + windowscls_loss
+            # if epoch < 2:
+            #     total_loss = raw_loss
+            # else:
+            #     total_loss = raw_loss + local_loss + windowscls_loss
+
+            total_loss = raw_loss + local_loss + windowscls_loss
 
             total_loss.backward()
 
@@ -59,7 +64,7 @@ def train(model,
         scheduler.step()
 
         # evaluation every epoch
-        if eval_trainset:
+        if eval_trainset and epoch% 5==0:
             raw_loss_avg, windowscls_loss_avg, total_loss_avg, raw_accuracy, local_accuracy, local_loss_avg\
                 = eval(model, trainloader, criterion, 'train', save_path, epoch)
 
@@ -104,6 +109,15 @@ def train(model,
                 'model_state_dict': model.state_dict(),
                 'learning_rate': lr,
             }, os.path.join(save_path, 'epoch' + str(epoch) + '.pth'))
+
+        if best_acc<local_accuracy:
+            print('Saving checkpoint')
+            torch.save({
+                'epoch': epoch,
+                'model_state_dict': model.state_dict(),
+                'learning_rate': lr,
+            }, os.path.join(save_path, 'best_model.pth'))
+            best_acc = local_accuracy
 
         # Limit the number of checkpoints to less than or equal to max_checkpoint_num,
         # and delete the redundant ones

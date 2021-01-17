@@ -86,7 +86,7 @@ def eval(model, testloader, criterion, status, save_path, epoch):
                         writer.add_images(status + '/' + 'raw image with boxes', cat_imgs, epoch, dataformats='HWC')
 
             # object branch tensorboard
-            if i == 0:
+            if i%100 == 0:
                 indices_ndarray = indices[:vis_num,:proposalN].cpu().numpy()
                 with SummaryWriter(log_dir=os.path.join(save_path, 'log'), comment=status + 'object') as writer:
                     cat_imgs = []

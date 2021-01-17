@@ -10,20 +10,21 @@ model_name = ''
 
 batch_size = 4
 vis_num = batch_size  # The number of visualized images in tensorboard
-eval_trainset = True  # Whether or not evaluate trainset
-save_interval = 10
+eval_trainset = False  # Whether or not evaluate trainset
+save_interval = 4
 max_checkpoint_num = 100
 end_epoch = 100
 init_lr = 0.001
-lr_milestones = [10,20,30,40,60,80,100]
+lr_milestones = [20, 40, 60, 100]
 lr_decay_rate = 0.1
 weight_decay = 1e-4
-stride = 32
+stride = 16
 channels = 2048
-input_size = 448  #448 as original
+input_size = 224  #448 as original
 
 # The pth path of pretrained model
 pretrain_path = './models/pretrained/resnet50-19c8e357.pth'
+
 
 if set == 'CUB':
     model_path = './checkpoint/cub'  # pth save path
@@ -39,29 +40,13 @@ if set == 'CUB':
               [8, 8], [6, 10], [10, 6], [7, 9], [9, 7], [7, 10], [10, 7]]
 else:
     # windows info for CAR and Aircraft
-    # N_list = [3, 2, 1]
-    # proposalN = sum(N_list)  # proposal window num
-
-    # window_side = [192, 256, 320]
-    # iou_threshs = [0.25, 0.25, 0.25]
-    # ratios = [[6, 6], [5, 7], [7, 5],
-    #           [8, 8], [6, 10], [10, 6], [7, 9], [9, 7],
-    #           [10, 10], [9, 11], [11, 9], [8, 12], [12, 8]]
-
-    # window_side = [128, 192, 256]
-    # iou_threshs = [0.25, 0.25, 0.25]
-    # ratios = [  [4, 4], [3, 5], [5, 3],
-    #             [6, 6], [5, 7], [7, 5],
-    #             [8, 8], [6, 10], [10, 6], [7, 9], [9, 7]]
-
-    N_list = [4, 2, 1]
+    N_list = [3, 2, 1]
     proposalN = sum(N_list)  # proposal window num
-
-    window_side = [64, 128, 192]
+    window_side = [96, 128, 160]
     iou_threshs = [0.25, 0.25, 0.25]
-    ratios = [[2, 2],[1,3],[3,1],
-              [4, 4], [3, 5], [5, 3],
-              [6, 6], [5, 7], [7, 5]]
+    ratios = [[6, 6], [5, 7], [7, 5],
+              [8, 8], [6, 10], [10, 6], [7, 9], [9, 7],
+              [10, 10], [9, 11], [11, 9], [8, 12], [12, 8]]
     if set == 'CAR':
         model_path = './checkpoint/car'      # pth save path
         root = './datasets/Stanford_Cars'  # dataset path
@@ -71,7 +56,7 @@ else:
         root = './datasets/FGVC-aircraft'  # dataset path
         num_classes = 100
     elif set == 'Mura':
-        model_path = './checkpoint/mura_onlyappm_4imgs'      # pth save path
+        model_path = './checkpoint/mura_224'      # pth save path
         root = r'E:\Xing\Data\MURA-v1.1'  # dataset path
         num_classes = 1
 

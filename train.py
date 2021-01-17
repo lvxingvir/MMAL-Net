@@ -10,7 +10,7 @@ from config import num_classes, model_name, model_path, lr_milestones, lr_decay_
 from utils.train_model import train
 from utils.read_dataset import read_dataset
 from utils.auto_laod_resume import auto_load_resume
-from networks.model_bdpt import MainNet
+from networks.model_onlyappm import MainNet
 
 import os
 
@@ -23,9 +23,6 @@ def main():
 
     #定义模型
     model = MainNet(proposalN=proposalN, num_classes=num_classes, channels=channels)
-
-    if torch.cuda.device_count() > 1:
-        model = nn.DataParallel(model).cuda()
 
     #设置训练参数
     # criterion = nn.CrossEntropyLoss()
@@ -42,10 +39,20 @@ def main():
         start_epoch = 0
         lr = init_lr
 
+
+    # bst_path = r'C:\Users\Xing\Projects\AirGo\MMAL-Net\checkpoint\mura_onlyappm\best_model.pth'
+    bst_path = ''
+    if os.path.exists(bst_path):
+        epoch = auto_load_resume(model, bst_path, status='test')
+        # start_epoch = 10 if epoch > 10 else epoch
+        lr = 0.0001
+
     # define optimizers
     optimizer = torch.optim.SGD(parameters, lr=lr, momentum=0.9, weight_decay=weight_decay)
 
     model = model.cuda()  # 部署在GPU
+    # if torch.cuda.device_count() > 1:
+    #     model = nn.DataParallel(model).cuda()
 
     scheduler = MultiStepLR(optimizer, milestones=lr_milestones, gamma=lr_decay_rate)
 
