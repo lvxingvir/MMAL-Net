@@ -397,5 +397,5 @@ class MURA_Dataset_4img(Dataset):
         # plt.colorbar()
         # plt.show()
         # sample = {'image': image, 'label': label, 'meta_data': meta_data}
-        return images,label # for only mura dataset
+        return image,images,label # for only mura dataset
         # return image,label_bp,label   # for mura bodypart

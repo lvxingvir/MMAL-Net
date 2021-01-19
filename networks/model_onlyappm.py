@@ -2,7 +2,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from networks import resnet
-from config import pretrain_path, coordinates_cat, iou_threshs, window_nums_sum, ratios, N_list
+from config_appm_eval import pretrain_path, coordinates_cat, iou_threshs, window_nums_sum, ratios, N_list
 import numpy as np
 from utils.AOLM import AOLM
 
@@ -124,6 +124,60 @@ class MainNet(nn.Module):
 
             window_imgs = window_imgs.reshape(batch_size * self.proposalN, 3, 224, 224)  # [N*4, 3, 224, 224]
             _, window_embeddings, _ = self.pretrained_model(window_imgs.detach())  # [N*4, 2048]
+            proposalN_windows_logits = self.rawcls_net(window_embeddings)  # [N* 4, 200]
+        else:
+            proposalN_windows_logits = torch.zeros([batch_size * self.proposalN, self.num_classes]).to(DEVICE)
+
+        return proposalN_windows_scores, proposalN_windows_logits, proposalN_indices, \
+               window_scores, coordinates, raw_logits, local_logits, local_imgs
+class MainNet_2input(nn.Module):
+    def __init__(self, proposalN, num_classes, channels):
+        # nn.Module子类的函数必须在构造函数中执行父类的构造函数
+        super(MainNet_2input, self).__init__()
+        self.num_classes = num_classes
+        self.proposalN = proposalN
+        self.raw_model = resnet.resnet50(pretrained=True, pth_path=pretrain_path)
+        self.pretrained_model = resnet.resnet50(pretrained=True, pth_path=pretrain_path)
+        self.rawcls_net = nn.Linear(channels, num_classes)
+        self.localcls_net = nn.Linear(channels, num_classes)
+        self.APPM = APPM()
+
+    def forward(self, x_1,x_2, epoch, batch_idx, status='test', DEVICE='cuda'):
+        fm, embedding, conv5_b = self.raw_model(x_1)
+        batch_size, channel_size, side_size, _ = fm.shape
+        assert channel_size == 2048
+
+        # raw branch
+        raw_logits = self.rawcls_net(embedding)
+
+        #SCDA
+        coordinates = torch.tensor(AOLM(fm.detach(), conv5_b.detach()))
+
+        local_imgs = torch.zeros([batch_size, 3, 448, 448]).to(DEVICE)  # [N, 3, 448, 448]
+
+        for i in range(batch_size):
+            [x0, y0, x1, y1] = coordinates[i]
+            local_imgs[i:i + 1] = F.interpolate(x_1[i:i + 1, :, x0:(x1+1), y0:(y1+1)], size=(448, 448),
+                                                mode='bilinear', align_corners=True)  # [N, 3, 224, 224]
+        local_imgs = x_2
+        local_fm, local_embeddings, _ = self.pretrained_model(local_imgs.detach())  # [N, 2048]
+        local_logits = self.localcls_net(local_embeddings)  # [N, 200]
+
+        proposalN_indices, proposalN_windows_scores, window_scores \
+            = self.APPM(self.proposalN, local_fm.detach(), ratios, window_nums_sum, N_list, iou_threshs, DEVICE)
+
+        if status == "train":
+            # window_imgs cls
+            window_imgs = torch.zeros([batch_size, self.proposalN, 3, 224, 224]).to(DEVICE)  # [N, 4, 3, 224, 224]
+            for i in range(batch_size):
+                for j in range(self.proposalN):
+                    [x0, y0, x1, y1] = coordinates_cat[proposalN_indices[i, j]]
+                    window_imgs[i:i + 1, j] = F.interpolate(local_imgs[i:i + 1, :, x0:(x1 + 1), y0:(y1 + 1)], size=(224, 224),
+                                                                mode='bilinear',
+                                                                align_corners=True)  # [N, 4, 3, 224, 224]
+
+            window_imgs = window_imgs.reshape(batch_size * self.proposalN, 3, 224, 224)  # [N*4, 3, 224, 224]
+            _, window_embeddings, _ = self.raw_model(window_imgs.detach())  # [N*4, 2048]
             proposalN_windows_logits = self.rawcls_net(window_embeddings)  # [N* 4, 200]
         else:
             proposalN_windows_logits = torch.zeros([batch_size * self.proposalN, self.num_classes]).to(DEVICE)

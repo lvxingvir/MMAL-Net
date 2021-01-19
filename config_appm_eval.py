@@ -39,14 +39,14 @@ if set == 'CUB':
               [8, 8], [6, 10], [10, 6], [7, 9], [9, 7], [7, 10], [10, 7]]
 else:
     # windows info for CAR and Aircraft
-    # N_list = [3, 2, 1]
-    # proposalN = sum(N_list)  # proposal window num
+    N_list = [3, 2, 1]
+    proposalN = sum(N_list)  # proposal window num
 
-    # window_side = [192, 256, 320]
-    # iou_threshs = [0.25, 0.25, 0.25]
-    # ratios = [[6, 6], [5, 7], [7, 5],
-    #           [8, 8], [6, 10], [10, 6], [7, 9], [9, 7],
-    #           [10, 10], [9, 11], [11, 9], [8, 12], [12, 8]]
+    window_side = [192, 256, 320]
+    iou_threshs = [0.25, 0.25, 0.25]
+    ratios = [[6, 6], [5, 7], [7, 5],
+              [8, 8], [6, 10], [10, 6], [7, 9], [9, 7],
+              [10, 10], [9, 11], [11, 9], [8, 12], [12, 8]]
 
     # window_side = [128, 192, 256]
     # iou_threshs = [0.25, 0.25, 0.25]
@@ -54,14 +54,14 @@ else:
     #             [6, 6], [5, 7], [7, 5],
     #             [8, 8], [6, 10], [10, 6], [7, 9], [9, 7]]
 
-    N_list = [4, 2, 1]
-    proposalN = sum(N_list)  # proposal window num
-
-    window_side = [64, 128, 192]
-    iou_threshs = [0.25, 0.25, 0.25]
-    ratios = [[2, 2],[1,3],[3,1],
-              [4, 4], [3, 5], [5, 3],
-              [6, 6], [5, 7], [7, 5]]
+    # N_list = [4, 2, 1]
+    # proposalN = sum(N_list)  # proposal window num
+    #
+    # window_side = [64, 128, 192]
+    # iou_threshs = [0.25, 0.25, 0.25]
+    # ratios = [[2, 2],[1,3],[3,1],
+    #           [4, 4], [3, 5], [5, 3],
+    #           [6, 6], [5, 7], [7, 5]]
     if set == 'CAR':
         model_path = './checkpoint/car'      # pth save path
         root = './datasets/Stanford_Cars'  # dataset path

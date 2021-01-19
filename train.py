@@ -7,10 +7,11 @@ import time
 from config import num_classes, model_name, model_path, lr_milestones, lr_decay_rate, input_size, \
     root, end_epoch, save_interval, init_lr, batch_size, CUDA_VISIBLE_DEVICES, weight_decay, \
     proposalN, set, channels
-from utils.train_model import train
+# from utils.train_model import train
+from utils.train_model_2input import train
 from utils.read_dataset import read_dataset
 from utils.auto_laod_resume import auto_load_resume
-from networks.model_onlyappm import MainNet
+from networks.model_onlyappm import MainNet,MainNet_2input
 
 import os
 
@@ -22,7 +23,8 @@ def main():
     trainloader, testloader = read_dataset(input_size, batch_size, root, set)
 
     #定义模型
-    model = MainNet(proposalN=proposalN, num_classes=num_classes, channels=channels)
+    # model = MainNet(proposalN=proposalN, num_classes=num_classes, channels=channels)
+    model = MainNet_2input(proposalN=proposalN, num_classes=num_classes, channels=channels)
 
     #设置训练参数
     # criterion = nn.CrossEntropyLoss()
