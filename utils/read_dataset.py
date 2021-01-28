@@ -62,30 +62,30 @@ def read_dataset(input_size, batch_size, root, set):
             ]),
         }
 
-        print('Loading Mura')
-        name = 'train'
-        trainset = dataset.MURA_Dataset(data_dir=root, csv_file='MURA-v1.1/%s.csv' % name,
-                                     transform=data_transforms[name])
-        trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=8)
-        print('Loading testset')
-
-        name = 'valid'
-        testset = dataset.MURA_Dataset(data_dir=root, csv_file='MURA-v1.1/%s.csv' % name,
-                                        transform=data_transforms[name])
-        testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=True, num_workers=8, drop_last=False)
-
         # print('Loading Mura')
         # name = 'train'
-        # trainset = dataset.MURA_Dataset_4img(data_dir=root, csv_file='MURA-v1.1/%s.csv' % name,
-        #                                 transform=data_transforms[name])
+        # trainset = dataset.MURA_Dataset(data_dir=root, csv_file='MURA-v1.1/%s.csv' % name,
+        #                              transform=data_transforms[name])
         # trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=8)
         # print('Loading testset')
         #
         # name = 'valid'
-        # testset = dataset.MURA_Dataset_4img(data_dir=root, csv_file='MURA-v1.1/%s.csv' % name,
-        #                                transform=data_transforms[name])
-        # testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=True, num_workers=8,
-        #                                          drop_last=False)
+        # testset = dataset.MURA_Dataset(data_dir=root, csv_file='MURA-v1.1/%s.csv' % name,
+        #                                 transform=data_transforms[name])
+        # testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=True, num_workers=8, drop_last=False)
+
+        print('Loading Mura')
+        name = 'train'
+        trainset = dataset.MURA_Dataset_4img(data_dir=root, csv_file='MURA-v1.1/%s.csv' % name,
+                                        transform=data_transforms[name])
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=8)
+        print('Loading testset')
+
+        name = 'valid'
+        testset = dataset.MURA_Dataset_4img(data_dir=root, csv_file='MURA-v1.1/%s.csv' % name,
+                                       transform=data_transforms[name])
+        testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=True, num_workers=8,
+                                                 drop_last=True)
 
     elif set == 'Mura_bp':
 

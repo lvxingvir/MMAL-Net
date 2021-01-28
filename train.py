@@ -42,12 +42,12 @@ def main():
         lr = init_lr
 
 
-    # bst_path = r'C:\Users\Xing\Projects\AirGo\MMAL-Net\checkpoint\mura_onlyappm\best_model.pth'
-    bst_path = ''
+    bst_path = r'C:\Users\Xing\Projects\AirGo\MMAL-Net\checkpoint\mura_onlyappm_4imgs_0123_dualcnn_windowacc_max\best_model.pth'
+    # bst_path = ''
     if os.path.exists(bst_path):
         epoch = auto_load_resume(model, bst_path, status='test')
         # start_epoch = 10 if epoch > 10 else epoch
-        lr = 0.0001
+        lr = 0.001
 
     # define optimizers
     optimizer = torch.optim.SGD(parameters, lr=lr, momentum=0.9, weight_decay=weight_decay)

@@ -19,6 +19,7 @@ def eval(model, testloader, criterion, status, save_path, epoch):
     iou_corrects = 0
     raw_correct = 0
     local_correct = 0
+    windows_correct = 0
 
     with torch.no_grad():
         for i, data in enumerate(tqdm(testloader)):
@@ -74,6 +75,9 @@ def eval(model, testloader, criterion, status, save_path, epoch):
             # pred = local_logits.max(1, keepdim=True)[1]
             local_correct += pred.eq(labels.view_as(pred)).sum().item()
 
+            pred = (proposalN_windows_logits.data.reshape(4,-1).max(dim=1).values > 0.5).type(torch.cuda.FloatTensor)
+            windows_correct += pred.eq(labels.view_as(pred)).sum().item()
+
             # raw branch tensorboard
             if i == 0:
                 if set == 'CUB':
@@ -110,7 +114,8 @@ def eval(model, testloader, criterion, status, save_path, epoch):
 
     raw_accuracy = raw_correct / len(testloader.dataset)
     local_accuracy = local_correct / len(testloader.dataset)
+    windows_accuracy = windows_correct / len(testloader.dataset)
 
 
     return raw_loss_avg, windowscls_loss_avg, total_loss_avg, raw_accuracy, local_accuracy, \
-           local_loss_avg
+           local_loss_avg,windows_accuracy

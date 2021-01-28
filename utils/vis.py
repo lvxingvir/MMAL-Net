@@ -12,7 +12,7 @@ def image_with_boxes(image, coordinates=None, color=None):
     if type(image) is not np.ndarray:
         image = image.clone().detach()
 
-        rgbN = [(255, 0, 0), (255, 165, 0), (255, 255, 0), (0, 255, 0), (0, 255, 0), (0, 255, 0), (0, 255, 0)]
+        rgbN = [(255, 0, 0),(255, 0, 0), (255, 165, 0), (255, 165, 0), (255, 255, 0), (255, 255, 0), (0, 255, 0), (0, 255, 0), (0, 255, 0), (0, 255, 0)]
 
         # Anti-normalization
         std = [0.229, 0.224, 0.225]
