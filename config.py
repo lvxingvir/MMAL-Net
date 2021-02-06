@@ -41,7 +41,7 @@ else:
     # windows info for CAR and Aircraft
     N_list = [3, 2, 1]
     proposalN = sum(N_list)  # proposal window num
-
+    #
     window_side = [192, 256, 320]
     iou_threshs = [0.25, 0.25, 0.25]
     ratios = [[6, 6], [5, 7], [7, 5],
@@ -71,7 +71,7 @@ else:
         root = './datasets/FGVC-aircraft'  # dataset path
         num_classes = 100
     elif set == 'Mura':
-        model_path = './checkpoint/mura_onlyappm_retest_20210128'      # pth save path
+        model_path = './checkpoint/mura_onlyappm_ssig_noisyor_20210205'      # pth save path
         root = r'E:\Xing\Data\MURA-v1.1'  # dataset path
         num_classes = 1
 

@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from tqdm import tqdm
 from tensorboardX import SummaryWriter
 from config import max_checkpoint_num, proposalN, eval_trainset, set
-from utils.eval_model_mura import eval
+from utils.eval_model_mura_noisyor import eval
 
 
 def train(model,
@@ -41,22 +41,22 @@ def train(model,
             proposalN_windows_score, proposalN_windows_logits, indices, \
             window_scores, _, raw_logits, local_logits, _ = model(images, epoch, i, 'train')
 
-            raw_logits = F.sigmoid(raw_logits)   # for mura
-            local_logits = F.sigmoid(local_logits)  # for mura
-            proposalN_windows_logits = F.sigmoid(proposalN_windows_logits) # for mura
 
             raw_loss = criterion(raw_logits, labels)  #float for mura
             local_loss = criterion(local_logits, labels) # float for mura
 
-            windowscls_loss = criterion(proposalN_windows_logits,
-                               labels.unsqueeze(1).repeat(1, proposalN).view(-1))
+            # windowscls_loss = criterion(proposalN_windows_logits,
+            #                    labels.unsqueeze(1).repeat(1, proposalN).view(-1))
 
-            # if epoch < 2:
-            #     total_loss = raw_loss
-            # else:
-            #     total_loss = raw_loss + local_loss + windowscls_loss
+            windowscls_loss = criterion(proposalN_windows_logits,labels)
 
-            total_loss = raw_loss + local_loss + windowscls_loss
+            if epoch % 5 == 1 or epoch % 5 == 2:
+                total_loss = raw_loss + local_loss
+            else:
+                total_loss = 2*local_loss + windowscls_loss
+
+            # total_loss = windowscls_loss
+            # total_loss = local_loss + windowscls_loss
 
             total_loss.backward()
 
@@ -66,12 +66,12 @@ def train(model,
 
         # evaluation every epoch
         if eval_trainset and epoch% 5==0:
-            raw_loss_avg, windowscls_loss_avg, total_loss_avg, raw_accuracy, local_accuracy, local_loss_avg\
+            raw_loss_avg, windowscls_loss_avg, total_loss_avg, raw_accuracy, local_accuracy, window_accuracy,local_loss_avg\
                 = eval(model, trainloader, criterion, 'train', save_path, epoch)
 
             print(
-                'Train set: raw accuracy: {:.2f}%, local accuracy: {:.2f}%'.format(
-                    100. * raw_accuracy, 100. * local_accuracy))
+                'Train set: raw accuracy: {:.2f}%, local accuracy: {:.2f}%, window accuracy: {:.2f}%'.format(
+                    100. * raw_accuracy, 100. * local_accuracy, 100. * window_accuracy))
 
             # tensorboard
             with SummaryWriter(log_dir=os.path.join(save_path, 'log'), comment='train') as writer:
@@ -79,24 +79,30 @@ def train(model,
                 writer.add_scalar('Train/learning rate', lr, epoch)
                 writer.add_scalar('Train/raw_accuracy', raw_accuracy, epoch)
                 writer.add_scalar('Train/local_accuracy', local_accuracy, epoch)
+                writer.add_scalar('Train/window_accuracy', window_accuracy, epoch)
                 writer.add_scalar('Train/raw_loss_avg', raw_loss_avg, epoch)
                 writer.add_scalar('Train/local_loss_avg', local_loss_avg, epoch)
                 writer.add_scalar('Train/windowscls_loss_avg', windowscls_loss_avg, epoch)
                 writer.add_scalar('Train/total_loss_avg', total_loss_avg, epoch)
 
         # eval testset
-        raw_loss_avg, windowscls_loss_avg, total_loss_avg, raw_accuracy, local_accuracy, \
+        raw_loss_avg, windowscls_loss_avg, total_loss_avg, raw_accuracy, local_accuracy, window_accuracy, \
         local_loss_avg\
             = eval(model, testloader, criterion, 'test', save_path, epoch)
 
         print(
-            'Test set: raw accuracy: {:.2f}%, local accuracy: {:.2f}%'.format(
-                100. * raw_accuracy, 100. * local_accuracy))
+            'Test set: raw loss: {:.2f}%, local loss: {:.2f}%, window loss: {:.2f}%'.format(
+                raw_loss_avg, local_loss_avg, windowscls_loss_avg))
+
+        print(
+            'Test set: raw accuracy: {:.2f}%, local accuracy: {:.2f}%, window accuracy: {:.2f}%'.format(
+                100. * raw_accuracy, 100. * local_accuracy, 100. * window_accuracy))
 
         # tensorboard
         with SummaryWriter(log_dir=os.path.join(save_path, 'log'), comment='test') as writer:
             writer.add_scalar('Test/raw_accuracy', raw_accuracy, epoch)
             writer.add_scalar('Test/local_accuracy', local_accuracy, epoch)
+            writer.add_scalar('Test/window_accuracy', window_accuracy, epoch)
             writer.add_scalar('Test/raw_loss_avg', raw_loss_avg, epoch)
             writer.add_scalar('Test/local_loss_avg', local_loss_avg, epoch)
             writer.add_scalar('Test/windowscls_loss_avg', windowscls_loss_avg, epoch)
