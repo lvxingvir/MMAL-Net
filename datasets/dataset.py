@@ -218,8 +218,8 @@ class MURA_Dataset(Dataset):
         """
         self.data_dir = data_dir
         ori_df = pd.read_csv(os.path.join(data_dir, csv_file))
-        self.frame = ori_df.sample(frac=0.3,random_state=1).reset_index(drop=True)  # for network testing
-        # self.frame = ori_df.copy()
+        # self.frame = ori_df.sample(frac=0.5,random_state=1).reset_index(drop=True)  # for network testing
+        self.frame = ori_df.copy()
         self.transform = transform
 
     def _parse_patient(self, img_filename):

@@ -71,7 +71,7 @@ else:
         root = './datasets/FGVC-aircraft'  # dataset path
         num_classes = 100
     elif set == 'Mura':
-        model_path = './checkpoint/mura_onlyappm_ssig_noisyor_20210205'      # pth save path
+        model_path = './checkpoint/mura_onlyappm_amil_1cnn_20210207'      # pth save path
         root = r'E:\Xing\Data\MURA-v1.1'  # dataset path
         num_classes = 1
 

@@ -42,8 +42,8 @@ def main():
         lr = init_lr
 
 
-    # bst_path = r'C:\Users\Xing\Projects\AirGo\MMAL-Net\checkpoint\mura_onlyappm_max_20210202\best_model.pth'
-    bst_path = ''
+    bst_path = r'C:\Users\Xing\Projects\AirGo\MMAL-Net\checkpoint\mura_onlyappm_amil_1cnn_20210206\best_model.pth'
+    # bst_path = ''
     if os.path.exists(bst_path):
         epoch = auto_load_resume(model, bst_path, status='test')
         # start_epoch = 10 if epoch > 10 else epoch

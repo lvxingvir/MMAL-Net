@@ -50,13 +50,13 @@ def train(model,
 
             windowscls_loss = criterion(proposalN_windows_logits,labels)
 
-            if epoch % 5 == 1 or epoch % 5 == 2:
-                total_loss = raw_loss + local_loss
-            else:
-                total_loss = 2*local_loss + windowscls_loss
+            # if epoch % 5 == 1 or epoch % 5 == 2:
+            #     total_loss = raw_loss + local_loss
+            # else:
+            #     total_loss = local_loss + windowscls_loss
 
             # total_loss = windowscls_loss
-            # total_loss = local_loss + windowscls_loss
+            total_loss = local_loss + windowscls_loss
 
             total_loss.backward()
 

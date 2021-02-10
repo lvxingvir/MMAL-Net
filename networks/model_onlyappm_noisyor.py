@@ -85,10 +85,18 @@ class MainNet(nn.Module):
         self.num_classes = num_classes
         self.proposalN = proposalN
         self.pretrained_model = resnet.resnet50(pretrained=True, pth_path=pretrain_path)
-        self.window_model = resnet.resnet50(pretrained=True, pth_path=pretrain_path)
+        # self.window_model = resnet.resnet50(pretrained=True, pth_path=pretrain_path)
         self.rawcls_net = nn.Linear(channels, num_classes)
-        self.window_net = nn.Linear(channels, num_classes)
+        # self.window_net = nn.Linear(channels, num_classes)
         self.APPM = APPM()
+
+
+        self.attention = nn.Sequential(
+            nn.Linear(channels,128),
+            nn.Tanh(),
+            nn.Linear(128,num_classes)
+
+        )
 
     def forward(self, x, epoch, batch_idx, status='test', DEVICE='cuda'):
         fm, embedding, conv5_b = self.pretrained_model(x)
@@ -128,20 +136,28 @@ class MainNet(nn.Module):
         # _, window_embeddings, _ = self.pretrained_model(window_imgs.detach())  # [N*4, 2048]
         # proposalN_windows_logits = self.rawcls_net(window_embeddings)  # [N* 4, 200]
 
-        _, window_embeddings, _ = self.window_model(window_imgs.detach())  # [N*4, 2048]
-        proposalN_windows_logits = self.window_net(window_embeddings)  # [N* 4, 200]
+        _, window_embeddings, _ = self.pretrained_model(window_imgs.detach())  # [N*4, 2048]
+        # proposalN_windows_logits = self.window_net(window_embeddings)  # [N* 4, 200]
+        proposalN_windows_logits = self.attention(window_embeddings).reshape(raw_logits.size()[0],1,-1)
+        # proposalN_windows_logits = torch.transpose(proposalN_windows_logits,1,0)
+        proposalN_windows_logits = F.softmax(proposalN_windows_logits,dim=2)
+
+        M = torch.bmm(proposalN_windows_logits,window_embeddings.reshape(raw_logits.size()[0],6,-1))
+        windows_logits = self.rawcls_net(M)  # [N* 4, 200]
+
+
 
         raw_logits = F.sigmoid(raw_logits)
         local_logits = F.sigmoid(local_logits)
-        proposalN_windows_logits = F.sigmoid(proposalN_windows_logits)
+        windows_logits = F.sigmoid(windows_logits)
 
-        ssig = lambda x:1/(1+torch.exp(-10*(x-0.5)))
-
-        # windows_logits = proposalN_windows_logits.reshape(raw_logits.size()[0],-1).max(dim=1).values
-
-        pw_logits = ssig(proposalN_windows_logits.reshape(raw_logits.size()[0],-1))
-
-        windows_logits = 1-torch.prod(1-pw_logits,dim=1)   # noisy-or
+        # ssig = lambda x:1/(1+torch.exp(-10*(x-0.5)))
+        #
+        # # windows_logits = proposalN_windows_logits.reshape(raw_logits.size()[0],-1).max(dim=1).values
+        #
+        # pw_logits = ssig(proposalN_windows_logits.reshape(raw_logits.size()[0],-1))
+        #
+        # windows_logits = 1-torch.prod(1-pw_logits,dim=1)   # noisy-or
 
         # windows_logits = 1 - torch.prod(1 - proposalN_windows_logits.reshape(raw_logits.size()[0], -1), \
         #                                 dim=1)*(1-local_logits.transpose(1,0))  # noisy-or
