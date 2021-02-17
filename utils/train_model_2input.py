@@ -47,17 +47,17 @@ def train(model,
 
             raw_loss = criterion(raw_logits, labels)  #float for mura
             local_loss = criterion(local_logits, labels) # float for mura
-            windowscls_loss = criterion(proposalN_windows_logits,
-                               labels.unsqueeze(1).repeat(1, proposalN).view(-1))
+            windowscls_loss = criterion(proposalN_windows_logits,labels)
+
             # windowscls_loss = criterion(proposalN_windows_logits.data.reshape(4,-1).max(dim=1).values,
             #                             labels)
 
-            # if epoch < 2:
-            #     total_loss = raw_loss + local_loss
-            # else:
-            #     total_loss = raw_loss + local_loss + 2* windowscls_loss
+            if epoch < 2:
+                total_loss = raw_loss + local_loss
+            else:
+                total_loss = raw_loss + local_loss + 2* windowscls_loss
 
-            total_loss = raw_loss + local_loss + 2* windowscls_loss
+            # total_loss = raw_loss + local_loss + 2* windowscls_loss
 
             total_loss.backward()
 
@@ -92,8 +92,9 @@ def train(model,
             = eval(model, testloader, criterion, 'test', save_path, epoch)
 
         print(
-            'Test set: raw accuracy: {:.2f}%, local accuracy: {:.2f}%, window accuracy: {:.2f}%'.format(
+            'Test set: raw accuracy: {:.2f}%, local accuracy: {:.2f}%, window accuracy: {:.2f}% \n'.format(
                 100. * raw_accuracy, 100. * local_accuracy,100. * window_accuracy ))
+        print('best acc: {:.2f}% \n'.format(best_acc))
 
         # tensorboard
         with SummaryWriter(log_dir=os.path.join(save_path, 'log'), comment='test') as writer:
@@ -114,14 +115,18 @@ def train(model,
                 'learning_rate': lr,
             }, os.path.join(save_path, 'epoch' + str(epoch) + '.pth'))
 
-        if best_acc<window_accuracy:
+        epoch_acc =  max(window_accuracy,local_accuracy,raw_accuracy)
+        print('epoch best acc: ', epoch_acc)
+        if best_acc<epoch_acc:
             print('Saving checkpoint')
             torch.save({
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
                 'learning_rate': lr,
             }, os.path.join(save_path, 'best_model.pth'))
-            best_acc = local_accuracy
+            best_acc = epoch_acc
+
+
 
         # Limit the number of checkpoints to less than or equal to max_checkpoint_num,
         # and delete the redundant ones

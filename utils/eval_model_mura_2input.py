@@ -42,8 +42,7 @@ def eval(model, testloader, criterion, status, save_path, epoch):
 
             raw_loss = criterion(raw_logits, labels)
             local_loss = criterion(local_logits, labels)
-            windowscls_loss = criterion(proposalN_windows_logits,
-                                        labels.unsqueeze(1).repeat(1, proposalN).view(-1))
+            windowscls_loss = criterion(proposalN_windows_logits,labels)
 
             total_loss = raw_loss + local_loss + windowscls_loss
 
@@ -75,7 +74,7 @@ def eval(model, testloader, criterion, status, save_path, epoch):
             # pred = local_logits.max(1, keepdim=True)[1]
             local_correct += pred.eq(labels.view_as(pred)).sum().item()
 
-            pred = (proposalN_windows_logits.data.reshape(4,-1).max(dim=1).values > 0.5).type(torch.cuda.FloatTensor)
+            pred = (proposalN_windows_logits.data > 0.5).type(torch.cuda.FloatTensor)
             windows_correct += pred.eq(labels.view_as(pred)).sum().item()
 
             # raw branch tensorboard

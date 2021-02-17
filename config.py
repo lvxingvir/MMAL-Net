@@ -63,7 +63,7 @@ else:
     #           [4, 4], [3, 5], [5, 3],
     #           [6, 6], [5, 7], [7, 5]]
 
-    N_list = [4, 3, 2]
+    N_list = [1, 3, 5]
     proposalN = sum(N_list)  # proposal window num
 
     window_side = [64,96,128]
@@ -81,7 +81,7 @@ else:
         root = './datasets/FGVC-aircraft'  # dataset path
         num_classes = 100
     elif set == 'Mura':
-        model_path = './checkpoint/mura_onlyappm_4imgs_0123_dualcnn_windowacc_lossmax'      # pth save path
+        model_path = './checkpoint/mura_onlyappm_4imgs_0213_amil_9feats_135'      # pth save path
         root = r'E:\Xing\Data\MURA-v1.1'  # dataset path
         num_classes = 1
 

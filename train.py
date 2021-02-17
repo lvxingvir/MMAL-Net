@@ -11,7 +11,7 @@ from config import num_classes, model_name, model_path, lr_milestones, lr_decay_
 from utils.train_model_2input import train
 from utils.read_dataset import read_dataset
 from utils.auto_laod_resume import auto_load_resume
-from networks.model_onlyappm import MainNet,MainNet_2input
+from networks.model_onlyappm_amil import MainNet,MainNet_2input
 
 import os
 
@@ -42,8 +42,8 @@ def main():
         lr = init_lr
 
 
-    bst_path = r'C:\Users\Xing\Projects\AirGo\MMAL-Net\checkpoint\mura_onlyappm_4imgs_0123_dualcnn_windowacc_max\best_model.pth'
-    # bst_path = ''
+    # bst_path = r'C:\Users\Xing\Projects\AirGo\MMAL-Net\checkpoint\mura_onlyappm_4imgs_0123_dualcnn_windowacc_max\best_model.pth'
+    bst_path = ''
     if os.path.exists(bst_path):
         epoch = auto_load_resume(model, bst_path, status='test')
         # start_epoch = 10 if epoch > 10 else epoch
