@@ -24,7 +24,7 @@ def auto_load_resume(model, path, status):
             print('Resume from %s' % pth_path)
             return epoch, lr
     elif status == 'test':
-        print('Load model from', path)
+        # print('Load model from', path)
         checkpoint = torch.load(path, map_location='cpu')
         new_state_dict = OrderedDict()
         for k, v in checkpoint['model_state_dict'].items():
@@ -35,5 +35,5 @@ def auto_load_resume(model, path, status):
             new_state_dict[name] = v
         model.load_state_dict(new_state_dict)
         epoch = checkpoint['epoch']
-        print('Resume from %s' % path)
+        # print('Resume from %s' % path)
         return epoch

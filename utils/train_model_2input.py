@@ -19,7 +19,8 @@ def train(model,
           end_epoch,
           save_interval):
 
-    best_acc=0
+    best_acc= {'window':0,'local':0,'raw':0}
+    epoch_acc = {}
 
     for epoch in range(start_epoch + 1, end_epoch + 1):
         model.train()
@@ -94,7 +95,7 @@ def train(model,
         print(
             'Test set: raw accuracy: {:.2f}%, local accuracy: {:.2f}%, window accuracy: {:.2f}% \n'.format(
                 100. * raw_accuracy, 100. * local_accuracy,100. * window_accuracy ))
-        print('best acc: {:.2f}% \n'.format(best_acc))
+        print('best acc: {:.2f}% \n'.format(best_acc['window']))
 
         # tensorboard
         with SummaryWriter(log_dir=os.path.join(save_path, 'log'), comment='test') as writer:
@@ -115,16 +116,21 @@ def train(model,
                 'learning_rate': lr,
             }, os.path.join(save_path, 'epoch' + str(epoch) + '.pth'))
 
-        epoch_acc =  max(window_accuracy,local_accuracy,raw_accuracy)
-        print('epoch best acc: ', epoch_acc)
-        if best_acc<epoch_acc:
-            print('Saving checkpoint')
-            torch.save({
-                'epoch': epoch,
-                'model_state_dict': model.state_dict(),
-                'learning_rate': lr,
-            }, os.path.join(save_path, 'best_model.pth'))
-            best_acc = epoch_acc
+        # epoch_acc =  max(window_accuracy,local_accuracy,raw_accuracy)
+        epoch_acc['window'] = window_accuracy
+        epoch_acc['local'] = local_accuracy
+        epoch_acc['raw'] = raw_accuracy
+
+        for key in epoch_acc.keys():
+        # print('epoch best acc: ', epoch_acc)
+            if best_acc[key]<epoch_acc[key]:
+                print('Saving checkpoint')
+                torch.save({
+                    'epoch': epoch,
+                    'model_state_dict': model.state_dict(),
+                    'learning_rate': lr,
+                }, os.path.join(save_path, key+'_best_model.pth'))
+                best_acc[key] = epoch_acc[key]
 
 
 

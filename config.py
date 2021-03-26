@@ -13,7 +13,7 @@ vis_num = batch_size  # The number of visualized images in tensorboard
 eval_trainset = True  # Whether or not evaluate trainset
 save_interval = 10
 max_checkpoint_num = 100
-end_epoch = 100
+end_epoch = 51
 init_lr = 0.001
 lr_milestones = [10,20,30,40,60,80,100]
 lr_decay_rate = 0.1
@@ -48,29 +48,31 @@ else:
     #           [8, 8], [6, 10], [10, 6], [7, 9], [9, 7],
     #           [10, 10], [9, 11], [11, 9], [8, 12], [12, 8]]
 
-    # window_side = [128, 192, 256]
-    # iou_threshs = [0.25, 0.25, 0.25]
-    # ratios = [  [4, 4], [3, 5], [5, 3],
-    #             [6, 6], [5, 7], [7, 5],
-    #             [8, 8], [6, 10], [10, 6], [7, 9], [9, 7]]
 
-    # N_list = [4, 2, 1]
-    # proposalN = sum(N_list)  # proposal window num
-    #
+
+    N_list = [1, 1, 1]
+    proposalN = sum(N_list)  # proposal window num
+
+    window_side = [128, 192, 256]
+    iou_threshs = [0.25, 0.25, 0.25]
+    ratios = [  [4, 4], [3, 5], [5, 3],
+                [6, 6], [5, 7], [7, 5],
+                [8, 8], [6, 10], [10, 6], [7, 9], [9, 7]]
+
     # window_side = [64, 128, 192]
     # iou_threshs = [0.25, 0.25, 0.25]
     # ratios = [[2, 2],[1,3],[3,1],
     #           [4, 4], [3, 5], [5, 3],
     #           [6, 6], [5, 7], [7, 5]]
 
-    N_list = [1, 3, 5]
-    proposalN = sum(N_list)  # proposal window num
-
-    window_side = [64,96,128]
-    iou_threshs = [0.5, 0.25, 0.25]
-    ratios = [[2, 2], [2,2], [2,2],
-              [3, 3], [3,3], [3,3],
-              [4, 4], [3, 5], [5, 3]]
+    # N_list = [7, 5, 3]
+    # proposalN = sum(N_list)  # proposal window num
+    #
+    # window_side = [64,96,128]
+    # iou_threshs = [0.5, 0.25, 0.25]
+    # ratios = [[2, 2], [2,2], [2,2],
+    #           [3, 3], [3,3], [3,3],
+    #           [4, 4], [3, 5], [5, 3]]
 
     if set == 'CAR':
         model_path = './checkpoint/car'      # pth save path
@@ -81,7 +83,7 @@ else:
         root = './datasets/FGVC-aircraft'  # dataset path
         num_classes = 100
     elif set == 'Mura':
-        model_path = './checkpoint/mura_onlyappm_4imgs_0213_amil_9feats_135'      # pth save path
+        model_path = './checkpoint/mura_onlyappm_0321_Elbow'      # pth save path
         root = r'E:\Xing\Data\MURA-v1.1'  # dataset path
         num_classes = 1
 

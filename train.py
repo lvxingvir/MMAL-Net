@@ -11,7 +11,7 @@ from config import num_classes, model_name, model_path, lr_milestones, lr_decay_
 from utils.train_model_2input import train
 from utils.read_dataset import read_dataset
 from utils.auto_laod_resume import auto_load_resume
-from networks.model_onlyappm_amil import MainNet,MainNet_2input
+from networks.model_onlyappm_wiamil import MainNet,MainNet_2input
 
 import os
 

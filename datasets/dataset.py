@@ -303,9 +303,11 @@ class MURA_Dataset_4img(Dataset):
         """
         self.data_dir = data_dir
         ori_df = pd.read_csv(os.path.join(data_dir, csv_file))
-        # self.frame = ori_df.sample(frac=0.01,random_state=1).reset_index(drop=True)  # for network testing
+        # self.frame = ori_df.sample(frac=0.1,random_state=1).reset_index(drop=True)  # for network testing
         self.frame = ori_df.copy()
+        self.frame = self.frame[self.frame['BodyPart']=='ELBOW'].reset_index(drop=True)
         self.transform = transform
+
 
     def _parse_patient(self, img_filename):
         """
@@ -385,11 +387,14 @@ class MURA_Dataset_4img(Dataset):
             for i in range(4):
                 img = Image.open(fls[i]).convert('RGB')
                 img = self.transform(img)
+                # img = F.interpolate(torch.unsqueeze(img,dim=0),size=[224,224])
                 images.append(img)
 
             image = self.transform(image)
 
-        images = utils.make_grid(images,nrow=2,padding=0)
+        images = utils.make_grid(images,nrow=2,padding=0)   # could be used as the images concat
+
+
         # images = F.interpolate(images,size=[448,448])
         # images = transforms.Resize()
 
