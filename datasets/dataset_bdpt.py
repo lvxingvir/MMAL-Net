@@ -251,7 +251,7 @@ class MURA_Dataset(Dataset):
         return len(self.frame)
 
     def __getitem__(self, idx):
-        img_filename = self.frame.loc[idx]['FilePath']
+        img_filename = self.frame.loc[idx]['norm_FilePath']
         # print(idx,img_filename)
         patient = self._parse_patient(img_filename)
         study = self._parse_study(img_filename)
@@ -282,4 +282,4 @@ class MURA_Dataset(Dataset):
         # plt.imshow(image.permute(1,2,0).numpy())
         # sample = {'image': image, 'label': label, 'meta_data': meta_data}
         # return image,label # for only mura dataset
-        return image,label_bp,label   # for mura bodypart
+        return image,label_bp,label,meta_data   # for mura bodypart

@@ -19,6 +19,7 @@ def eval(model, testloader, criterion_bp,criterion_ls, status, save_path, epoch)
     iou_corrects = 0
     raw_correct = 0
     local_correct = 0
+    windows_correct = 0
 
     with torch.no_grad():
         for i, data in enumerate(tqdm(testloader)):
@@ -56,11 +57,14 @@ def eval(model, testloader, criterion_bp,criterion_ls, status, save_path, epoch)
             if set == 'CUB':
                 # computer resized coordinates of boxes
                 boxes_coor = boxes.float()
-                resized_boxes = torch.cat([(boxes_coor[:,0] * scale[:, 0]).unsqueeze(1) ,(boxes_coor[:,1] * scale[:, 1]).unsqueeze(1),
-                                           (boxes_coor[:,2] * scale[:, 0]).unsqueeze(1), (boxes_coor[:,3] * scale[:, 1]).unsqueeze(1)], dim=1)
-                resized_coor = torch.cat([resized_boxes[:,0].unsqueeze(1) ,resized_boxes[:,1].unsqueeze(1),
-                                           (resized_boxes[:,0] + resized_boxes[:,2]).unsqueeze(1), (resized_boxes[:,1]+resized_boxes[:,3]).unsqueeze(1)], dim=1).round().int()
-
+                resized_boxes = torch.cat(
+                    [(boxes_coor[:, 0] * scale[:, 0]).unsqueeze(1), (boxes_coor[:, 1] * scale[:, 1]).unsqueeze(1),
+                     (boxes_coor[:, 2] * scale[:, 0]).unsqueeze(1), (boxes_coor[:, 3] * scale[:, 1]).unsqueeze(1)],
+                    dim=1)
+                resized_coor = torch.cat([resized_boxes[:, 0].unsqueeze(1), resized_boxes[:, 1].unsqueeze(1),
+                                          (resized_boxes[:, 0] + resized_boxes[:, 2]).unsqueeze(1),
+                                          (resized_boxes[:, 1] + resized_boxes[:, 3]).unsqueeze(1)],
+                                         dim=1).round().int()
 
                 iou = calculate_iou(coordinates.cpu().numpy(), resized_coor.numpy())
                 iou_corrects += np.sum(iou >= 0.5)
@@ -69,11 +73,15 @@ def eval(model, testloader, criterion_bp,criterion_ls, status, save_path, epoch)
             # raw
             # pred = (raw_logits.data > 0.5).type(torch.cuda.FloatTensor)  # for mura
             pred = raw_logits.max(1, keepdim=True)[1]
+            # raw_correct += pred.eq(labels.view_as(pred)).sum().item()
             raw_correct += pred.eq(labels_bp.view_as(pred)).sum().item()
             # local
-            pred = (local_logits.data > 0.5).type(torch.cuda.FloatTensor) # for mura
+            pred = (local_logits.data > 0.5).type(torch.cuda.FloatTensor)  # for mura
             # pred = local_logits.max(1, keepdim=True)[1]
             local_correct += pred.eq(labels.view_as(pred)).sum().item()
+
+            pred = (proposalN_windows_logits.data > 0.5).type(torch.cuda.FloatTensor)
+            windows_correct += pred.eq(labels.view_as(pred)).sum().item()
 
             # raw branch tensorboard
             if i == 0:
@@ -90,8 +98,8 @@ def eval(model, testloader, criterion_bp,criterion_ls, status, save_path, epoch)
                         writer.add_images(status + '/' + 'raw image with boxes', cat_imgs, epoch, dataformats='HWC')
 
             # object branch tensorboard
-            if i == 0:
-                indices_ndarray = indices[:vis_num,:proposalN].cpu().numpy()
+            if i % 100 == 0:
+                indices_ndarray = indices[:vis_num, :proposalN].cpu().numpy()
                 with SummaryWriter(log_dir=os.path.join(save_path, 'log'), comment=status + 'object') as writer:
                     cat_imgs = []
                     for j, indice_ndarray in enumerate(indices_ndarray):
@@ -104,14 +112,14 @@ def eval(model, testloader, criterion_bp,criterion_ls, status, save_path, epoch)
             #     if i >= 2 :
             #         break
 
-    raw_loss_avg = raw_loss_sum / (i+1)
-    local_loss_avg = local_loss_sum / (i+1)
-    windowscls_loss_avg = windowscls_loss_sum / (i+1)
-    total_loss_avg = total_loss_sum / (i+1)
+        raw_loss_avg = raw_loss_sum / (i + 1)
+        local_loss_avg = local_loss_sum / (i + 1)
+        windowscls_loss_avg = windowscls_loss_sum / (i + 1)
+        total_loss_avg = total_loss_sum / (i + 1)
 
-    raw_accuracy = raw_correct / len(testloader.dataset)
-    local_accuracy = local_correct / len(testloader.dataset)
+        raw_accuracy = raw_correct / len(testloader.dataset)
+        local_accuracy = local_correct / len(testloader.dataset)
+        windows_accuracy = windows_correct / len(testloader.dataset)
 
-
-    return raw_loss_avg, windowscls_loss_avg, total_loss_avg, raw_accuracy, local_accuracy, \
-           local_loss_avg
+        return raw_loss_avg, windowscls_loss_avg, total_loss_avg, raw_accuracy, local_accuracy, \
+               local_loss_avg, windows_accuracy

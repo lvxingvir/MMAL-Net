@@ -20,7 +20,8 @@ def train(model,
           end_epoch,
           save_interval):
 
-    best_acc = 0
+    best_acc = {'window': 0, 'local': 0, 'raw': 0}
+    epoch_acc = {}
 
     for epoch in range(start_epoch + 1, end_epoch + 1):
         model.train()
@@ -64,38 +65,39 @@ def train(model,
         scheduler.step()
 
         # evaluation every epoch
-        if eval_trainset and epoch%10==0:
-            raw_loss_avg, windowscls_loss_avg, total_loss_avg, raw_accuracy, local_accuracy, local_loss_avg\
-                = eval(model, trainloader, criterion_bp,criterion_ls,'train', save_path, epoch)
+        if eval_trainset and epoch % 5 == 0:
+            raw_loss_avg, windowscls_loss_avg, total_loss_avg, raw_accuracy, local_accuracy, local_loss_avg,window_accuracy \
+                = eval(model, trainloader, criterion_bp, criterion_ls, 'train', save_path, epoch)
 
             print(
-                'Train set: raw accuracy: {:.2f}%, local accuracy: {:.2f}%'.format(
-                    100. * raw_accuracy, 100. * local_accuracy))
+                'Train set: raw accuracy: {:.2f}%, local accuracy: {:.2f}%, window accuracy: {:.2f}%'.format(
+                    100. * raw_accuracy, 100. * local_accuracy, 100. * window_accuracy))
 
             # tensorboard
             with SummaryWriter(log_dir=os.path.join(save_path, 'log'), comment='train') as writer:
-
                 writer.add_scalar('Train/learning rate', lr, epoch)
                 writer.add_scalar('Train/raw_accuracy', raw_accuracy, epoch)
                 writer.add_scalar('Train/local_accuracy', local_accuracy, epoch)
+                writer.add_scalar('Train/window_accuracy', window_accuracy, epoch)
                 writer.add_scalar('Train/raw_loss_avg', raw_loss_avg, epoch)
                 writer.add_scalar('Train/local_loss_avg', local_loss_avg, epoch)
                 writer.add_scalar('Train/windowscls_loss_avg', windowscls_loss_avg, epoch)
                 writer.add_scalar('Train/total_loss_avg', total_loss_avg, epoch)
 
         # eval testset
-        raw_loss_avg, windowscls_loss_avg, total_loss_avg, raw_accuracy, local_accuracy, \
-        local_loss_avg\
+        raw_loss_avg, windowscls_loss_avg, total_loss_avg, raw_accuracy, local_accuracy, local_loss_avg, window_accuracy \
             = eval(model, testloader, criterion_bp,criterion_ls, 'test', save_path, epoch)
 
         print(
-            'Test set: raw accuracy: {:.2f}%, local accuracy: {:.2f}%'.format(
-                100. * raw_accuracy, 100. * local_accuracy))
+            'Test set: raw accuracy: {:.2f}%, local accuracy: {:.2f}%, window accuracy: {:.2f}% \n'.format(
+                100. * raw_accuracy, 100. * local_accuracy, 100. * window_accuracy))
+        print('best acc: {:.2f}% \n'.format(best_acc['window']))
 
         # tensorboard
         with SummaryWriter(log_dir=os.path.join(save_path, 'log'), comment='test') as writer:
             writer.add_scalar('Test/raw_accuracy', raw_accuracy, epoch)
             writer.add_scalar('Test/local_accuracy', local_accuracy, epoch)
+            writer.add_scalar('Test/window_accuracy', window_accuracy, epoch)
             writer.add_scalar('Test/raw_loss_avg', raw_loss_avg, epoch)
             writer.add_scalar('Test/local_loss_avg', local_loss_avg, epoch)
             writer.add_scalar('Test/windowscls_loss_avg', windowscls_loss_avg, epoch)
@@ -110,14 +112,21 @@ def train(model,
                 'learning_rate': lr,
             }, os.path.join(save_path, 'epoch' + str(epoch) + '.pth'))
 
-        if best_acc<local_accuracy:
-            print('Saving checkpoint')
-            torch.save({
-                'epoch': epoch,
-                'model_state_dict': model.state_dict(),
-                'learning_rate': lr,
-            }, os.path.join(save_path, 'best_model.pth'))
-            best_acc = local_accuracy
+        # epoch_acc =  max(window_accuracy,local_accuracy,raw_accuracy)
+        epoch_acc['window'] = window_accuracy
+        epoch_acc['local'] = local_accuracy
+        epoch_acc['raw'] = raw_accuracy
+
+        for key in epoch_acc.keys():
+            # print('epoch best acc: ', epoch_acc)
+            if best_acc[key] < epoch_acc[key]:
+                print('Saving checkpoint')
+                torch.save({
+                    'epoch': epoch,
+                    'model_state_dict': model.state_dict(),
+                    'learning_rate': lr,
+                }, os.path.join(save_path, key + '_best_model.pth'))
+                best_acc[key] = epoch_acc[key]
 
         # Limit the number of checkpoints to less than or equal to max_checkpoint_num,
         # and delete the redundant ones

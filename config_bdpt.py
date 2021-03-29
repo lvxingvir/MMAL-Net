@@ -6,7 +6,8 @@ CUDA_VISIBLE_DEVICES = '3'  # The current version only supports one GPU training
 
 
 set = 'Mura_bp'  # Different dataset with different
-model_name = ''
+model_name = 'epoch30.pth'
+# model_name = ''
 
 batch_size = 4
 vis_num = batch_size*4  # The number of visualized images in tensorboard
@@ -15,7 +16,7 @@ save_interval = 10
 max_checkpoint_num = 60
 end_epoch = 60
 init_lr = 0.001
-lr_milestones = [10,20,30,40]
+lr_milestones = [5, 10, 15, 20, 25, 30,40]
 lr_decay_rate = 0.1
 weight_decay = 1e-4
 stride = 32
@@ -23,7 +24,7 @@ channels = 2048
 input_size = 448  #448 as original
 
 # The pth path of pretrained model
-pretrain_path = './models/pretrained/resnet50-19c8e357.pth'
+pretrain_path = r'./models/pretrained/resnet50-19c8e357.pth'
 
 
 if set == 'CUB':
@@ -61,7 +62,7 @@ else:
         root = r'E:\Xing\Data\MURA-v1.1'  # dataset path
         num_classes = 1
     elif set == 'Mura_bp':
-        model_path = './checkpoint/mura_bp_bimodel_adj0103'  # pth save path
+        model_path = r'.\checkpoint\mura_bp_bimodel_corr_mil_0326_test'  # pth save path
         root = r'E:\Xing\Data\MURA-v1.1'  # dataset path
         num_classes = 7
 

@@ -7,10 +7,10 @@ import time
 from config_bdpt import num_classes, model_name, model_path, lr_milestones, lr_decay_rate, input_size, \
     root, end_epoch, save_interval, init_lr, batch_size, CUDA_VISIBLE_DEVICES, weight_decay, \
     proposalN, set, channels
-from utils.train_model_bdpt import train
+from utils.train_model_bdpt_mil import train
 from utils.read_dataset import read_dataset
 from utils.auto_laod_resume import auto_load_resume
-from networks.model_bdpt import MainNet
+from networks.model_bdpt_mil import MainNet
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -36,14 +36,18 @@ def main():
     parameters = model.parameters()
 
     #加载checkpoint
-    save_path = os.path.join(model_path, model_name)
+    # save_path = os.path.join(model_path, model_name)
+    save_path = model_path
     if os.path.exists(save_path):
+        print('load path',save_path)
         start_epoch, lr = auto_load_resume(model, save_path, status='train')
         assert start_epoch < end_epoch
+        print(start_epoch,lr,save_path)
     else:
         os.makedirs(save_path)
         start_epoch = 0
         lr = init_lr
+        print(start_epoch, lr, save_path)
 
     # define optimizers
     optimizer = torch.optim.SGD(parameters, lr=lr, momentum=0.9, weight_decay=weight_decay)

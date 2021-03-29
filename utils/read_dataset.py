@@ -1,6 +1,7 @@
 import torch
 import os
-from datasets import dataset
+# from datasets.dataset_bdpt import dataset
+import datasets.dataset_bdpt as dataset
 from torchvision import transforms
 
 def read_dataset(input_size, batch_size, root, set):

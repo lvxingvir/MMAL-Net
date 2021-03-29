@@ -88,7 +88,15 @@ class MainNet(nn.Module):
         self.pretrained_model = resnet.resnet50(pretrained=True, pth_path=pretrain_path)
         self.rawcls_net = nn.Linear(channels, num_classes)
         self.localcls_net = nn.Linear(channels, 1)
+        self.window_net = nn.Linear(channels, 1)
         self.APPM = APPM()
+
+        self.attention = nn.Sequential(
+            nn.Linear(channels, 128),
+            nn.Tanh(),
+            nn.Linear(128, 1)
+
+        )
 
     def forward(self, x, epoch, batch_idx, status='test', DEVICE='cuda'):
         fm, embedding, conv5_b = self.pretrained_model_bp(x)
@@ -113,22 +121,59 @@ class MainNet(nn.Module):
         proposalN_indices, proposalN_windows_scores, window_scores \
             = self.APPM(self.proposalN, local_fm.detach(), ratios, window_nums_sum, N_list, iou_threshs, DEVICE)
 
-        if status == "train":
+        # if status == "train":
+        if True:
+            wsz = 224
             # window_imgs cls
-            window_imgs = torch.zeros([batch_size, self.proposalN, 3, 224, 224]).to(DEVICE)  # [N, 4, 3, 224, 224]
+            window_imgs = torch.zeros([batch_size, self.proposalN, 3, wsz, wsz]).to(DEVICE)  # [N, 4, 3, 224, 224]
+            # window_imgs = torch.zeros([batch_size, self.proposalN, 3, wsz, wsz]).to(DEVICE)
             for i in range(batch_size):
                 for j in range(self.proposalN):
                     [x0, y0, x1, y1] = coordinates_cat[proposalN_indices[i, j]]
-                    window_imgs[i:i + 1, j] = F.interpolate(local_imgs[i:i + 1, :, x0:(x1 + 1), y0:(y1 + 1)], size=(224, 224),
-                                                                mode='bilinear',
-                                                                align_corners=True)  # [N, 4, 3, 224, 224]
+                    window_imgs[i:i + 1, j] = F.interpolate(local_imgs[i:i + 1, :, x0:(x1 + 1), y0:(y1 + 1)],
+                                                            size=(wsz, wsz),
+                                                            mode='bilinear',
+                                                            align_corners=True)  # [N, 4, 3, 224, 224]
+                # for k in range(4):
+                #     x0 = k % 2
+                #     y0 = k // 2
+                #     # print(224*x0,224*(x0+1),224*y0,224*(y0+1))
+                #     window_imgs[i:i + 1, self.proposalN + k] = F.interpolate(
+                #         local_imgs[i:i + 1, :, 224 * x0:224 * (x0 + 1), 224 * y0:224 * (y0 + 1)], size=(wsz, wsz),
+                #         mode='bilinear',
+                #         align_corners=True)
 
-            window_imgs = window_imgs.reshape(batch_size * self.proposalN, 3, 224, 224)  # [N*4, 3, 224, 224]
+            window_imgs = window_imgs.reshape(batch_size * (self.proposalN), 3, wsz, wsz)  # [N*4, 3, 224, 224]
+            # window_imgs = window_imgs.reshape(batch_size * self.proposalN, 3, wsz, wsz)  # [N*4, 3, 224, 224]
+
             _, window_embeddings, _ = self.pretrained_model(window_imgs.detach())  # [N*4, 2048]
-            proposalN_windows_logits = self.localcls_net(window_embeddings)  # [N* 4, 200]
-        else:
-            # proposalN_windows_logits = torch.zeros([batch_size * self.proposalN, self.num_classes]).to(DEVICE)
-            proposalN_windows_logits = torch.zeros([batch_size * self.proposalN, 1]).to(DEVICE)
 
-        return proposalN_windows_scores, proposalN_windows_logits, proposalN_indices, \
+            proposalN_windows_logits = self.attention(window_embeddings).reshape(raw_logits.size()[0], 1, -1)
+            # proposalN_windows_logits = torch.transpose(proposalN_windows_logits,1,0)
+            proposalN_windows_logits = F.softmax(proposalN_windows_logits, dim=2)
+
+            M = torch.bmm(proposalN_windows_logits,
+                          window_embeddings.reshape(raw_logits.size()[0], self.proposalN, -1))
+            # M = torch.bmm(proposalN_windows_logits,
+            #               window_embeddings.reshape(raw_logits.size()[0], self.proposalN, -1))
+            windows_logits = self.window_net(M)  # [N* 4, 200]
+
+        # if status == "train":
+        #     # window_imgs cls
+        #     window_imgs = torch.zeros([batch_size, self.proposalN, 3, 224, 224]).to(DEVICE)  # [N, 4, 3, 224, 224]
+        #     for i in range(batch_size):
+        #         for j in range(self.proposalN):
+        #             [x0, y0, x1, y1] = coordinates_cat[proposalN_indices[i, j]]
+        #             window_imgs[i:i + 1, j] = F.interpolate(local_imgs[i:i + 1, :, x0:(x1 + 1), y0:(y1 + 1)], size=(224, 224),
+        #                                                         mode='bilinear',
+        #                                                         align_corners=True)  # [N, 4, 3, 224, 224]
+        #
+        #     window_imgs = window_imgs.reshape(batch_size * self.proposalN, 3, 224, 224)  # [N*4, 3, 224, 224]
+        #     _, window_embeddings, _ = self.pretrained_model(window_imgs.detach())  # [N*4, 2048]
+        #     proposalN_windows_logits = self.localcls_net(window_embeddings)  # [N* 4, 200]
+        # else:
+        #     # proposalN_windows_logits = torch.zeros([batch_size * self.proposalN, self.num_classes]).to(DEVICE)
+        #     proposalN_windows_logits = torch.zeros([batch_size * self.proposalN, 1]).to(DEVICE)
+
+        return proposalN_windows_scores, windows_logits, proposalN_indices, \
                window_scores, coordinates, raw_logits, local_logits, local_imgs
